@@ -1,5 +1,5 @@
 [workspace]
 members = [
   "rust-mlp",
-  "mlp-viz"
+  "model-gui"
 ]
