@@ -1,5 +1,5 @@
 <h1>TrainXOR</h1>
-<p>TrainXor is an educational website that attempts to teach users how different parameters affect the ability of a machine learning model to learn XOR</p>
+<p>TrainXor is an educational website that attempts to teach users how different parameters affect the ability of a machine learning model to learn the XOR gate</p>
 <h2>Run</h2>
 1. Clone the repository
 
