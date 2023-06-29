@@ -1,0 +1,88 @@
+use rust_mlp::{Model, Loss, Activation, Layer};
+use instant::{Duration, Instant};
+use egui::{vec2, Color32, Frame, Rect};
+
+#[cfg(not(target_arch = "wasm32"))]
+fn main() {
+    println!("Hello, world!");
+    let model : Model<f64> = Model::from_layers(
+        vec![
+            Layer::from_size(2, 2, Activation::Sigmoid)
+        ],
+        Loss::MeanSquaredError
+    );
+
+    print!("MODEL : {:?}", model);
+}
+
+
+
+#[cfg(target_arch = "wasm32")]
+fn main(){
+    console_error_panic_hook::set_once();
+    let web_options = eframe::WebOptions::default();
+    wasm_bindgen_futures::spawn_local(async {
+        eframe::start_web(
+            "the_canvas_id",
+            web_options,
+            Box::new(|cc| Box::new(App::new(cc)))
+        )
+        .await
+        .expect("Couldn't start eframe!");
+    });
+}
+
+
+pub struct App {
+    time: Instant,
+    model: Model,
+}
+
+impl App {
+    pub fn new(cc : &eframe::CreationContext<'_>)  -> Self {
+        let visuals = egui::Visuals::dark();
+        cc.egui_ctx.set_visuals(visuals);
+
+        App {
+            time: Instant::now()
+        } 
+    }
+
+    pub fn initialize_model(&mut self) -> String {
+        let model : Model<f64> = Model::from_layers(
+            vec![
+                Layer::from_size(2, 2, Activation::Sigmoid),
+                Layer::from_size(2, 1, Activation::None)
+            ],
+            Loss::MeanSquaredError
+        );
+
+        format!("{:?}", model)
+    }
+}
+
+impl eframe::App for App {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        egui::CentralPanel::default() 
+            .frame(
+                Frame::default()
+            )
+            .show(
+                ctx, |ui| {
+                    ui.label("HI");
+                    if ui.button("CREATE MODEL!").clicked() {
+                        let model_string = self.initialize_model(); 
+                        ui.label(model_string);
+                    }
+                }
+            );
+        
+        ctx.request_repaint_after(Duration::from_millis(50))
+    }
+}
+
+
+
+
+
+
