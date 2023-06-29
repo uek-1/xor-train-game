@@ -1,7 +1,8 @@
 use rust_mlp::{Model, Loss, Activation, Layer};
 use instant::{Duration, Instant};
-use egui::{vec2, Color32, Frame, Rect, RichText, Vec2, Sense, Stroke};
+use egui::{vec2, Color32, Frame, Rect, RichText, Vec2, Sense, Stroke, Pos2, Painter};
 use std::fmt::Write;
+mod widgets;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
@@ -33,10 +34,23 @@ fn main(){
     });
 }
 
+pub struct ModelData {
+    pub learning_rate : String,
+}
+
+impl Default for ModelData {
+    fn default() -> Self {
+        ModelData { 
+            learning_rate:  String::from(""),
+        }
+    }
+}
+
 
 pub struct App {
     time: Instant,
     model: Model<f64>,
+    data: ModelData,
 }
 
 impl App {
@@ -46,7 +60,8 @@ impl App {
 
         App {
             time: Instant::now(),
-            model: Model::new(Loss::MeanSquaredError)
+            model: Model::new(Loss::MeanSquaredError),
+            data: ModelData::default()
         } 
     }
 
@@ -81,10 +96,10 @@ impl App {
         (train, validate)
     }
 
-    pub fn train_model(&mut self) {
+    pub fn train_model(&mut self, rate: f64) {
         let (train, validate) = Self::get_xor_data();
      
-        self.model.fit(train, validate, 1, 1.2);
+        self.model.fit(train, validate, 1, rate);
     }
     
     #[allow(unused)]
@@ -120,37 +135,6 @@ impl App {
 
         out
     }
-
-    pub fn paint_model(&mut self, ui: &mut egui::Ui) {
-        let white_col32 = Color32::from_rgb(255, 255, 255);
-        let black_col32 = Color32::from_rgb(0, 0, 0);
-        let white_stroke = Stroke::new(3.0, white_col32);
-        let black_stroke = Stroke::new(3.0, black_col32);
-
-        ui.heading(RichText::new("MODEL:").size(30.0));
-
-        let (response, painter) = ui.allocate_painter(ui.available_size() * 0.9, Sense::hover());
-
-        let screen = response.rect;
-        let origin = screen.min;
-        let circle_radius = 30.0;
-        
-        // 1 neuron width between layers
-        let x_step = circle_radius * 4.0;
-        // 0.5 neuron height between neurons
-        let y_step = circle_radius * 3.0;
-
-        for (layer_num, layer) in self.model.layers.iter().enumerate() {
-            let neuron_count = layer.weights.len() as f32;
-            let centered_height = (screen.height() / 2.0) - ((neuron_count - 1.0) * circle_radius);
-            let mut current_pos = origin + Vec2::new(circle_radius + x_step * (layer_num as f32), centered_height);
-
-            for neuron in &layer.weights {
-                painter.circle_stroke(current_pos, circle_radius, white_stroke);
-                current_pos += Vec2::new(0.0, y_step);
-            }
-        }
-    }
 }
 
 impl eframe::App for App {
@@ -160,43 +144,15 @@ impl eframe::App for App {
                 Frame::default()
             )
             .show(
-                ctx, |ui| {
-                    if ui.button(RichText::new("CREATE MODEL!").size(24.0)).clicked() {
-                        self.initialize_model(); 
-                    }
-
-                    ui.collapsing(
-                        RichText::new("DEBUG").size(16.0), |ui| {
-                            ui.label(RichText::new(self.get_model_string()).size(12.0));
-                        }
-                    );
-
-                    ui.add_space(5.0);
-
-                    if ui.button(RichText::new("TRAIN MODEL!").size(24.0)).clicked() {
-                        self.train_model();
-                    }
-
-                    ui.collapsing(
-                        RichText::new("Predictions").size(20.0), |ui| { 
-                            ui.label(RichText::new(self.get_evaluate_string()).size(12.0));
-                        }
-                    );
-
-                    ui.add_space(5.0);
-                    
-                    egui::ScrollArea::both().show(ui, |ui| self.paint_model(ui)); 
+                ctx, |ui| { 
+                    ui.add(widgets::control_panel(self));
+                    ui.add(widgets::model(&mut self.model))
                 }
             );
 
-        // Done with CentralPanel
-        
+        // Done with CentralPanel        
         ctx.request_repaint_after(Duration::from_millis(50))
     }
 }
-
-
-
-
 
 
