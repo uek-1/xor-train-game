@@ -22,6 +22,7 @@ fn main() {
 #[cfg(target_arch = "wasm32")]
 fn main(){
     console_error_panic_hook::set_once();
+    tracing_wasm::set_as_global_default();
     let web_options = eframe::WebOptions::default();
     wasm_bindgen_futures::spawn_local(async {
         eframe::start_web(
@@ -68,9 +69,9 @@ impl App {
     pub fn initialize_model(&mut self) {
         let model : Model<f64> = Model::from_layers(
             vec![
-                Layer::from_size(2, 8, Activation::Sigmoid),
-                Layer::from_size(8, 16, Activation::Sigmoid),
-                Layer::from_size(16, 1, Activation::None)
+                Layer::from_size(2, 16, Activation::Sigmoid),
+                Layer::from_size(16, 8, Activation::None),
+                Layer::from_size(8, 1, Activation::None)
             ],
             Loss::MeanSquaredError
         );
@@ -154,7 +155,12 @@ impl eframe::App for App {
             )
             .show(
                 ctx, |ui| { 
-                    ui.add(widgets::model(&mut self.model))
+                    egui::ScrollArea::vertical()
+                        .vscroll(true)
+                        .auto_shrink([false; 2])
+                        .show(ui, |ui| {
+                            ui.add(widgets::model(&mut self.model))
+                    });
                 }
             );
 

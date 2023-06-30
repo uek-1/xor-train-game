@@ -1,11 +1,30 @@
-use egui::{Area, Vec2, ScrollArea, widgets::plot::{Plot, PlotUi, Text, MarkerShape, Points, self}};
+use egui::{Area, Vec2, ScrollArea, widgets::plot::{Plot, PlotUi, Text, MarkerShape, Points, self}, Rect, Sense, Layout};
 use rust_mlp::Model;
 
-use super::neuron::{neuron, self};
+use super::layer::layer;
 
 pub fn model_ui(ui: &mut egui::Ui, model: &mut Model<f64>) -> egui::Response {
-    let max_size = ui.available_size();
+    let radius = 30.0;
+    ui.horizontal_centered( 
+        |ui| {
+            let mut current_pos = ui.next_widget_position();
 
+            model.layers
+                .iter_mut()
+                .enumerate()
+                .for_each(
+                    |(num, model_layer)| {
+                        let layer_neurons = model_layer.weights.len() as f32;
+                        let layer_size = Vec2::new(radius * 2.5, radius * 4.0 * layer_neurons);
+                        let layer_rect = Rect::from_min_size(current_pos, layer_size);
+                        ui.add_sized(layer_size, layer(model_layer, radius));
+                    }
+                );
+        }
+    ).response
+}
+
+pub fn model_ui_plot(ui : &mut egui::Ui, model : &mut Model<f64>) -> egui::Response {
     Plot::new("model-plot")
         .show_x(false)
         .show_y(false)
@@ -45,27 +64,7 @@ pub fn model_ui(ui: &mut egui::Ui, model: &mut Model<f64>) -> egui::Response {
                     .filled(false)
             )
     }).response
-    
-    /*
-    egui::ScrollArea::vertical().show_viewport(ui, |ui, viewport| {
-    ui.rect(
-        max_size, |ui| {
-            let origin = ui.next_widget_position();
-            let radius = 20.0;    
 
-            for (i, layer) in model.layers.iter_mut().enumerate(){
-                let mut loc = origin + Vec2::new(i as f32 * radius * 5.0, 0.0);
-
-                for weights in &mut layer.weights { 
-                    ui.add(neuron(loc, 20.0, weights));
-                    loc += Vec2::new(0.0, radius * 4.0);
-                    ui.skip_ahead_auto_ids(1);
-                }
-            }
-        }
-    )
-    }).inner.response
-    */
 }
 
 pub fn model(model: &mut Model<f64>) -> impl egui::Widget + '_ {
