@@ -9,8 +9,11 @@ pub fn neuron_ui(ui: &mut egui::Ui, pos : Pos2, radius : f32, weights : &mut Vec
             ui.ctx(), |ui| {
                 let (response, painter) = ui.allocate_painter(Vec2::new(2.0 * radius, 2.0 * radius), Sense::click());
                 let screen = response.rect;
+
+                if ui.is_rect_visible(screen) {
+                    painter.circle_stroke(screen.center(), radius, Stroke::new(1.0, Color32::from_rgb(255, 255, 255)));
+                }
    
-                painter.circle_stroke(screen.center(), radius, Stroke::new(1.0, Color32::from_rgb(255, 255, 255)));
                 
                 if response.hovered() {
                     ui.heading(format!("{:?}", weights));

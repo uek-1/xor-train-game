@@ -1,5 +1,5 @@
 use crate::App;
-use egui::{RichText, Response};
+use egui::{RichText, Response, SidePanel};
 
 fn control_panel_ui(ui: &mut egui::Ui, app: &mut App) -> Response {
     ui.collapsing(
@@ -32,7 +32,8 @@ fn control_panel_ui(ui: &mut egui::Ui, app: &mut App) -> Response {
                 }
             );
         }
-    ).header_response
+    )
+    .header_response
 }
 
 pub fn control_panel(app : &mut App) -> impl egui::Widget + '_{

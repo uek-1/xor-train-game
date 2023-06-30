@@ -139,13 +139,21 @@ impl App {
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        egui::SidePanel::right("Options Bar")
+            .frame(
+                Frame::default()
+            )
+            .show(
+                ctx, |ui| {
+                    ui.add(widgets::control_panel(self))
+                }
+            );
         egui::CentralPanel::default() 
             .frame(
                 Frame::default()
             )
             .show(
                 ctx, |ui| { 
-                    ui.add(widgets::control_panel(self));
                     ui.add(widgets::model(&mut self.model))
                 }
             );
