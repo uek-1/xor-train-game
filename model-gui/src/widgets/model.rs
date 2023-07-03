@@ -1,11 +1,26 @@
 use egui::{Area, Vec2, ScrollArea, widgets::plot::{Plot, PlotUi, Text, MarkerShape, Points, self}, Rect, Sense, Layout};
-use rust_mlp::Model;
+use rust_mlp::{Model, Activation, self};
 
 use super::layer::layer;
 
-pub fn model_ui(ui: &mut egui::Ui, model: &mut Model<f64>) -> egui::Response {
+pub struct LayerState {
+    neuron_count_string : String,
+    activation : Activation
+}
+
+impl LayerState {
+    pub fn new() -> Self {
+        LayerState { neuron_count_string: String::from(""), activation: Activation::None }
+    }
+}
+
+
+pub fn model_ui(ui: &mut egui::Ui, model: &mut Model<f64>, layer_state : &mut LayerState) -> egui::Response {
     let radius = 30.0;
-    ui.horizontal_centered( 
+    let mut layer_to_delete = None;
+    let mut layer_to_add = None;
+    let last_layer_num = model.layers.len().checked_sub(1);
+    let return_response = ui.horizontal_centered( 
         |ui| {
             let mut current_pos = ui.next_widget_position();
 
@@ -17,56 +32,53 @@ pub fn model_ui(ui: &mut egui::Ui, model: &mut Model<f64>) -> egui::Response {
                         let layer_neurons = model_layer.weights.len() as f32;
                         let layer_size = Vec2::new(radius * 2.5, radius * 4.0 * layer_neurons);
                         let layer_rect = Rect::from_min_size(current_pos, layer_size);
-                        ui.add_sized(layer_size, layer(model_layer, radius));
+                        ui.add_sized(layer_size, layer(model_layer, radius))
+                            .context_menu(|ui| {
+                                ui.menu_button("New", |ui| {
+                                    ui.text_edit_singleline(&mut layer_state.neuron_count_string).on_hover_text("Enter the number of neurons");
+                                    egui::ComboBox::from_label("Activation Function")
+                                        .selected_text(format!("{:?}", layer_state.activation))
+                                        .show_ui(ui, |ui| {
+                                            ui.selectable_value(&mut layer_state.activation, Activation::Sigmoid, "Sigmoid");
+                                            ui.selectable_value(&mut layer_state.activation, Activation::None, "None");
+                                        });
+
+                                    if ui.button("Add").clicked() {
+                                        let input_shape = layer_neurons as usize;
+                                        let output_shape = layer_state.neuron_count_string.clone().parse().unwrap();
+                                        layer_to_add = Some((num, rust_mlp::Layer::from_size(input_shape, output_shape, layer_state.activation.clone())));                                        
+                                        ui.close_menu();
+                                    };
+                                });
+
+                                // Safety : Can unwrap safely because layers > 1 in this code block
+                                // so last_layer_num must exist.
+
+                                if num != last_layer_num.unwrap() && ui.button("Delete").clicked() {
+                                    layer_to_delete = Some(num);
+                                    ui.close_menu();
+                                }
+                            });
                     }
                 );
         }
-    ).response
+    ).response;
+
+    match (layer_to_delete, last_layer_num) {
+        (Some(num), Some(last)) if num != last => {model.layers.remove(num); ()},
+        _ => ()
+    } 
+
+    match layer_to_add {
+        Some((num, x)) => model.layers.insert(num + 1, x),
+        _ => ()
+    }
+     
+    return_response
 }
 
-pub fn model_ui_plot(ui : &mut egui::Ui, model : &mut Model<f64>) -> egui::Response {
-    Plot::new("model-plot")
-        .show_x(false)
-        .show_y(false)
-        .show_axes([false; 2])
-        .center_x_axis(true)
-        .center_y_axis(true)
-        .allow_scroll(false)
-        .allow_drag(false)
-        .data_aspect(2.0)
-        .view_aspect(2.0)
-        .auto_bounds_y()
-        .auto_bounds_x()
-        .show_background(false)
-        .height(ui.available_height() * 0.8)
-        .show(ui, |plotui| {
-            let radius = 20.0;    
-            let mut points = vec![];
-            let layer_count = model.layers.len() as f32;
-            let origin = Vec2::new(-5.0 * radius * (layer_count - 1.0), 0.0);
-            
-            for (i, layer) in model.layers.iter_mut().enumerate(){
-                let neuron_count = layer.weights.len() as f32;
-                let mut loc = origin + Vec2::new(i as f32 * radius * 10.0, -2.0 * radius * (neuron_count-1.0));
-
-                for weights in &mut layer.weights { 
-                    //ui.add(neuron(loc, 20.0, weights));
-                    points.push([loc.x as f64, loc.y as f64]);
-                    loc += Vec2::new(0.0, radius * 4.0);
-                }
-            }
-
-            plotui.points(
-                Points::new(points)
-                    .radius(radius)
-                    .shape(MarkerShape::Circle)
-                    .color(egui::Color32::from_rgb(255, 255, 255))
-                    .filled(false)
-            )
-    }).response
-
+pub fn model<'a>(model: &'a mut Model<f64>, layer_state: &'a mut LayerState) -> impl egui::Widget + 'a {
+    move |ui : &mut egui::Ui| model_ui(ui, model, layer_state) 
 }
 
-pub fn model(model: &mut Model<f64>) -> impl egui::Widget + '_ {
-    move |ui : &mut egui::Ui| model_ui(ui, model) 
-}
+

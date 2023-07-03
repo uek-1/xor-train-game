@@ -1,4 +1,4 @@
-use egui::{Widget, Area, Rect, Sense, Pos2, Vec2};
+use egui::{Widget, Area, Rect, Sense, Pos2, Vec2, RichText};
 use super::neuron::{neuron};
 
 pub fn layer_ui(ui: &mut egui::Ui, layer : &mut rust_mlp::Layer<f64>, radius : f32) -> egui::Response {
@@ -16,10 +16,20 @@ pub fn layer_ui(ui: &mut egui::Ui, layer : &mut rust_mlp::Layer<f64>, radius : f
     }).response;
 
 
+    ui.add_space(15.0);
+    let layer_info = format!("Layer: Neurons: {}, Dimensions: {} x {}, Activation {:?}", layer.weights.len(), layer.weights[0].len(), layer.weights.len(), layer.activation);
+    ui
+        .interact(ui.min_rect(), ui.next_auto_id(), Sense::hover())
+        .on_hover_ui_at_pointer(|ui| {
+            ui.label(RichText::new(layer_info).size(16.0));
+        });
+    
+    // Return click response to handle right click context menu in model widget
+    ui.interact(ui.min_rect(), ui.next_auto_id(), Sense::click())
 
-    ui.add_space(3.0);
-    let layer_info = format!("Layer: Size: {}, Dimensions: {} x {}, Activation {:?}", layer.weights.len(), layer.weights[0].len(), layer.weights.len(), layer.activation);
-    layer_resp.on_hover_text_at_pointer(layer_info)
+
+
+    //layer_resp.on_hover_text_at_pointer(layer_info)
 }
 
 pub fn layer(layer: &mut rust_mlp::Layer<f64>, radius: f32) -> impl Widget +'_{

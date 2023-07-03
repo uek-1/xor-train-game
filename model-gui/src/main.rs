@@ -37,12 +37,14 @@ fn main(){
 
 pub struct ModelData {
     pub learning_rate : String,
+    pub layer_state : crate::widgets::model::LayerState,
 }
 
 impl Default for ModelData {
     fn default() -> Self {
         ModelData { 
             learning_rate:  String::from(""),
+            layer_state : crate::widgets::model::LayerState::new()
         }
     }
 }
@@ -69,9 +71,8 @@ impl App {
     pub fn initialize_model(&mut self) {
         let model : Model<f64> = Model::from_layers(
             vec![
-                Layer::from_size(2, 16, Activation::Sigmoid),
-                Layer::from_size(16, 8, Activation::None),
-                Layer::from_size(8, 1, Activation::None)
+                Layer::from_size(2, 2, Activation::Sigmoid),
+                Layer::from_size(2, 1, Activation::None)
             ],
             Loss::MeanSquaredError
         );
@@ -159,7 +160,7 @@ impl eframe::App for App {
                         .vscroll(true)
                         .auto_shrink([false; 2])
                         .show(ui, |ui| {
-                            ui.add(widgets::model(&mut self.model))
+                            ui.add(widgets::model(&mut self.model, &mut self.data.layer_state))
                     });
                 }
             );
