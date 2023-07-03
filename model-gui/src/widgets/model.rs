@@ -69,7 +69,10 @@ fn create_layers_ui(ui: &mut egui::Ui, model: &mut Model<f64>, radius: f32, laye
 fn layer_context_menu(ui : &mut egui::Ui, layer_state : &mut LayerState, layer_menu_state: &mut LayerMenuState) {
     ui.label("Layer Actions:");
     ui.menu_button("New", |ui| {
-        ui.text_edit_singleline(&mut layer_state.neuron_count_string).on_hover_text("Enter the number of neurons");
+        egui::TextEdit::singleline(&mut layer_state.neuron_count_string)
+            .hint_text("Layer Size")
+            .show(ui);
+
         egui::ComboBox::from_label("Activation Function")
             .selected_text(format!("{:?}", layer_state.activation))
             .show_ui(ui, |ui| {
