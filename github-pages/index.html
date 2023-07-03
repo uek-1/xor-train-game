@@ -8,7 +8,7 @@
   <title>rust-mlp-viz</title>
 
   <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
-  <script type="module">import init from '/model-gui-3dc96f1f18a69a4d.js';init('/model-gui-3dc96f1f18a69a4d_bg.wasm');</script>
+  <script type="module">import init from '/preload.js';init('/app.wasm');</script>
   <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
   <base href="/">
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="white">
@@ -100,8 +100,10 @@
     }
   </style>
 
-<link rel="preload" href="/model-gui-3dc96f1f18a69a4d_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-<link rel="modulepreload" href="/model-gui-3dc96f1f18a69a4d.js"></head>
+  <link rel="preload" href="/app.wasm" type="application/wasm" as="fetch" crossorigin="">
+  <link rel="modulepreload" href="/preload.js">
+
+</head>
 
 <body>
   <!-- The WASM code will resize the canvas dynamically -->
