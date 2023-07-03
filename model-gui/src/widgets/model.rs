@@ -14,62 +14,37 @@ impl LayerState {
     }
 }
 
+pub struct LayerMenuState {
+    index : usize,
+    input_shape: usize,
+    last_layer_index: Option<usize>,
+    layer_to_delete: Option<usize>,
+    layer_to_add: Option<(usize, rust_mlp::Layer<f64>)>
+}
+
+pub fn model<'a>(model: &'a mut Model<f64>, layer_state: &'a mut LayerState) -> impl egui::Widget + 'a {
+    move |ui : &mut egui::Ui| model_ui(ui, model, layer_state) 
+}
 
 pub fn model_ui(ui: &mut egui::Ui, model: &mut Model<f64>, layer_state : &mut LayerState) -> egui::Response {
     let radius = 30.0;
-    let mut layer_to_delete = None;
-    let mut layer_to_add = None;
-    let last_layer_num = model.layers.len().checked_sub(1);
-    let return_response = ui.horizontal_centered( 
-        |ui| {
-            let mut current_pos = ui.next_widget_position();
+    let mut layer_menu_state = LayerMenuState {
+        index: 0,
+        input_shape: 0,
+        last_layer_index : model.layers.len().checked_sub(1),
+        layer_to_delete: None,
+        layer_to_add: None
+    };
 
-            model.layers
-                .iter_mut()
-                .enumerate()
-                .for_each(
-                    |(num, model_layer)| {
-                        let layer_neurons = model_layer.weights.len() as f32;
-                        let layer_size = Vec2::new(radius * 2.5, radius * 4.0 * layer_neurons);
-                        let layer_rect = Rect::from_min_size(current_pos, layer_size);
-                        ui.add_sized(layer_size, layer(model_layer, radius))
-                            .context_menu(|ui| {
-                                ui.menu_button("New", |ui| {
-                                    ui.text_edit_singleline(&mut layer_state.neuron_count_string).on_hover_text("Enter the number of neurons");
-                                    egui::ComboBox::from_label("Activation Function")
-                                        .selected_text(format!("{:?}", layer_state.activation))
-                                        .show_ui(ui, |ui| {
-                                            ui.selectable_value(&mut layer_state.activation, Activation::Sigmoid, "Sigmoid");
-                                            ui.selectable_value(&mut layer_state.activation, Activation::None, "None");
-                                        });
 
-                                    if ui.button("Add").clicked() {
-                                        let input_shape = layer_neurons as usize;
-                                        let output_shape = layer_state.neuron_count_string.clone().parse().unwrap();
-                                        layer_to_add = Some((num, rust_mlp::Layer::from_size(input_shape, output_shape, layer_state.activation.clone())));                                        
-                                        ui.close_menu();
-                                    };
-                                });
+    let return_response = ui.horizontal_centered(|ui| create_layers_ui(ui, model, radius, layer_state, &mut layer_menu_state)).response;
 
-                                // Safety : Can unwrap safely because layers > 1 in this code block
-                                // so last_layer_num must exist.
-
-                                if num != last_layer_num.unwrap() && ui.button("Delete").clicked() {
-                                    layer_to_delete = Some(num);
-                                    ui.close_menu();
-                                }
-                            });
-                    }
-                );
-        }
-    ).response;
-
-    match (layer_to_delete, last_layer_num) {
+    match (layer_menu_state.layer_to_delete, layer_menu_state.last_layer_index) {
         (Some(num), Some(last)) if num != last => {model.layers.remove(num); ()},
         _ => ()
     } 
 
-    match layer_to_add {
+    match layer_menu_state.layer_to_add {
         Some((num, x)) => model.layers.insert(num + 1, x),
         _ => ()
     }
@@ -77,8 +52,48 @@ pub fn model_ui(ui: &mut egui::Ui, model: &mut Model<f64>, layer_state : &mut La
     return_response
 }
 
-pub fn model<'a>(model: &'a mut Model<f64>, layer_state: &'a mut LayerState) -> impl egui::Widget + 'a {
-    move |ui : &mut egui::Ui| model_ui(ui, model, layer_state) 
+fn create_layers_ui(ui: &mut egui::Ui, model: &mut Model<f64>, radius: f32, layer_state: &mut LayerState, layer_menu_state: &mut LayerMenuState) {
+    model.layers
+        .iter_mut()
+        .enumerate()
+        .for_each(|(num, model_layer)| {
+            let layer_neurons = model_layer.weights.len() as f32;
+            let layer_size = Vec2::new(radius * 2.5, radius * 4.0 * layer_neurons);
+            layer_menu_state.input_shape = layer_neurons as usize;
+            layer_menu_state.index = num;
+            ui.add_sized(layer_size, layer(model_layer, radius))
+                .context_menu(|ui| layer_context_menu(ui, layer_state, layer_menu_state));
+        });
 }
+
+fn layer_context_menu(ui : &mut egui::Ui, layer_state : &mut LayerState, layer_menu_state: &mut LayerMenuState) {
+    ui.label("Layer Actions:");
+    ui.menu_button("New", |ui| {
+        ui.text_edit_singleline(&mut layer_state.neuron_count_string).on_hover_text("Enter the number of neurons");
+        egui::ComboBox::from_label("Activation Function")
+            .selected_text(format!("{:?}", layer_state.activation))
+            .show_ui(ui, |ui| {
+                ui.selectable_value(&mut layer_state.activation, Activation::Sigmoid, "Sigmoid");
+                ui.selectable_value(&mut layer_state.activation, Activation::None, "None");
+            });
+
+        if ui.button("Add").clicked() {
+            let input_shape = layer_menu_state.input_shape;
+            let output_shape = layer_state.neuron_count_string.clone().parse().unwrap();
+            layer_menu_state.layer_to_add = Some((layer_menu_state.index, rust_mlp::Layer::from_size(input_shape, output_shape, layer_state.activation.clone()))); 
+            ui.close_menu();
+        };
+    });
+
+    // Safety : Can unwrap safely because layers > 1 in this code block
+    // so last_layer_num must exist.
+
+    if layer_menu_state.index != layer_menu_state.last_layer_index.unwrap() && ui.button("Delete").clicked() {
+        layer_menu_state.layer_to_delete = Some(layer_menu_state.index);
+        ui.close_menu();
+    }
+}
+
+
 
 

@@ -60,6 +60,12 @@ impl App {
     pub fn new(cc : &eframe::CreationContext<'_>)  -> Self {
         let visuals = egui::Visuals::dark();
         cc.egui_ctx.set_visuals(visuals);
+        let mut debug_opt = egui::style::DebugOptions::default();
+        debug_opt.debug_on_hover = true;
+        debug_opt.show_interactive_widgets = true;
+        let mut style = (*cc.egui_ctx.style()).clone();
+        style.debug = debug_opt;
+        cc.egui_ctx.set_style(style);
 
         App {
             time: Instant::now(),
