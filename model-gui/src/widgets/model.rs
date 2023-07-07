@@ -76,8 +76,10 @@ fn layer_context_menu(ui : &mut egui::Ui, layer_state : &mut LayerState, layer_m
         egui::ComboBox::from_label("Activation Function")
             .selected_text(format!("{:?}", layer_state.activation))
             .show_ui(ui, |ui| {
-                ui.selectable_value(&mut layer_state.activation, Activation::Sigmoid, "Sigmoid");
                 ui.selectable_value(&mut layer_state.activation, Activation::None, "None");
+                ui.selectable_value(&mut layer_state.activation, Activation::Sigmoid, "Sigmoid");
+                ui.selectable_value(&mut layer_state.activation, Activation::Relu, "ReLu");
+                ui.selectable_value(&mut layer_state.activation, Activation::Softmax, "Softmax");
             });
 
         if ui.button("Add").clicked() {
