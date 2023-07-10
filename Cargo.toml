@@ -1,5 +1,5 @@
 [workspace]
 members = [
-  "rust-mlp",
-  "model-gui"
+  "puffpastry",
+  "gui"
 ]

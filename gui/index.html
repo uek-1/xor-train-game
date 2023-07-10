@@ -1,16 +1,18 @@
-<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!DOCTYPE html>
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
 <!-- Disable zooming: -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
-
+<head>
   <!-- change this to your project name -->
   <title>LearnXOR</title>
 
   <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
-  <script type="module">import init from '/gui-f2bbef4af0d3ecbe.js';init('/gui-f2bbef4af0d3ecbe_bg.wasm');</script>
+  <link data-trunk rel="rust" data-wasm-opt="2" />
   <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
-  <base href="/">
+  <base data-trunk-public-url />
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="white">
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#404040">
 
@@ -99,15 +101,12 @@
       }
     }
   </style>
-
-<link rel="preload" href="/gui-f2bbef4af0d3ecbe_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-<link rel="modulepreload" href="/gui-f2bbef4af0d3ecbe.js"></head>
+</head>
 
 <body>
   <!-- The WASM code will resize the canvas dynamically -->
   <!-- the id is hardcoded in main.rs . so, make sure both match. -->
   <canvas id="the_canvas_id"></canvas>
+</body>
 
-
-
-</body></html>
+</html>
